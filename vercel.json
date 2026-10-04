@@ -4,5 +4,11 @@
     "api/chat.py": {
       "maxDuration": 60
     }
-  }
+  },
+  "routes": [
+    { "src": "/api/chat", "dest": "/api/chat.py" },
+    { "src": "/style.css", "dest": "/style.css" },
+    { "src": "/script.js", "dest": "/script.js" },
+    { "src": "/(.*)", "dest": "/index.html" }
+  ]
 }
