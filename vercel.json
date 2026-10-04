@@ -4,11 +4,5 @@
     "api/chat.py": {
       "maxDuration": 60
     }
-  },
-  "outputDirectory": ".",
-  "routes": [
-    { "src": "/api/chat", "dest": "/api/chat.py" },
-    { "handle": "filesystem" },
-    { "src": "/(.*)", "dest": "/index.html" }
-  ]
+  }
 }

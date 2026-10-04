@@ -102,7 +102,3 @@ class handler(BaseHTTPRequestHandler):
             self._send_json({"error": f"Could not reach Gemini API: {e.reason}"}, status=502)
         except Exception as e:
             self._send_json({"error": str(e)}, status=500)
-
-    def do_GET(self):
-        self._send_json({"status": "API is online. Send a POST request to chat."}, status=200)
-
