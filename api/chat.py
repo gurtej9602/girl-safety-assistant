@@ -1,5 +1,6 @@
 import json
 import os
+import pathlib
 from http.server import BaseHTTPRequestHandler
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError, URLError
@@ -14,6 +15,17 @@ contacting trusted people or appropriate emergency services when there is immedi
 Do not claim to be a human, doctor, lawyer, police officer, or emergency service.
 Do not invent phone numbers, laws, addresses, or real-world resources.
 """
+
+# Root directory of the project (one level up from api/)
+ROOT = pathlib.Path(__file__).parent.parent
+
+STATIC_FILES = {
+    "/":           ("index.html",  "text/html; charset=utf-8"),
+    "/index.html": ("index.html",  "text/html; charset=utf-8"),
+    "/style.css":  ("style.css",   "text/css; charset=utf-8"),
+    "/script.js":  ("script.js",   "application/javascript; charset=utf-8"),
+}
+
 
 def process_chat(data):
     api_key = os.environ.get("GEMINI_API_KEY", API_KEY)
@@ -68,13 +80,35 @@ def process_chat(data):
 
 class handler(BaseHTTPRequestHandler):
     def _send_json(self, data, status=200):
-        response_bytes = json.dumps(data, ensure_ascii=False).encode("utf-8")
+        body = json.dumps(data, ensure_ascii=False).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
-        self.send_header("Content-Length", str(len(response_bytes)))
+        self.send_header("Content-Length", str(len(body)))
         self.send_header("Access-Control-Allow-Origin", "*")
         self.end_headers()
-        self.wfile.write(response_bytes)
+        self.wfile.write(body)
+
+    def _serve_static(self, path):
+        entry = STATIC_FILES.get(path)
+        if not entry:
+            self.send_response(404)
+            self.end_headers()
+            self.wfile.write(b"Not found")
+            return
+        filename, mime = entry
+        filepath = ROOT / filename
+        try:
+            content = filepath.read_bytes()
+        except FileNotFoundError:
+            self.send_response(404)
+            self.end_headers()
+            self.wfile.write(b"File not found")
+            return
+        self.send_response(200)
+        self.send_header("Content-Type", mime)
+        self.send_header("Content-Length", str(len(content)))
+        self.end_headers()
+        self.wfile.write(content)
 
     def do_OPTIONS(self):
         self.send_response(204)
@@ -83,12 +117,15 @@ class handler(BaseHTTPRequestHandler):
         self.send_header("Access-Control-Allow-Headers", "Content-Type")
         self.end_headers()
 
+    def do_GET(self):
+        path = self.path.split("?")[0]
+        self._serve_static(path)
+
     def do_POST(self):
         try:
             content_length = int(self.headers.get("Content-Length", 0))
             body_bytes = self.rfile.read(content_length) if content_length > 0 else b"{}"
             data = json.loads(body_bytes.decode("utf-8") or "{}")
-
             res_body, status_code = process_chat(data)
             self._send_json(res_body, status=status_code)
         except HTTPError as e:
