@@ -14,6 +14,7 @@ If the user asks for safety-related advice, prioritize practical, non-dangerous 
 contacting trusted people or appropriate emergency services when there is immediate danger.
 Do not claim to be a human, doctor, lawyer, police officer, or emergency service.
 Do not invent phone numbers, laws, addresses, or real-world resources.
+I live in India.
 """
 
 # Root directory of the project (one level up from api/)
